@@ -1,8 +1,3 @@
----
-layout: post
-title: Immutability: Perks and Quirks
----
-
 # Immutability: Perks and Quirks
 If you have a function `f` that takes a single argument `x`, one may ask, “what does function `f` do?”
 
@@ -58,7 +53,7 @@ let tu: CGFloat = 4.0
 group.path.addLine(to: CGPoint(x: timbuk, y: tu)) /// Legal under shallow immutability.
 ```
 
-###Deep
+### Deep
 In deep immutability, not only are you forbidden from re-assigning an object’s fields, you are also forbidden from mutating them.
 
 ```Swift
@@ -86,7 +81,11 @@ car.color = red /// Not allowed
 car.engine.type = .automatic // Not allowed
 ```
 
-## Aliasing: The Roof of All Evil
+There are many reasons immutable ojects are preferrable. Here we will explore two:
+1. No Aliasing
+2. Safer and easier to understand.
+
+## Aliasing: The Root of All Evil
 Backing OOP is the idea of encapsulating abstract data in logical containers referred to as objects. They have state and behavior and an interface.  But single objects are not interesting. For an object to be useful, they have to be part of a system of objects that interacts with each other’s interface. A system of objects is not necessarily encapsulated. In Swift, with reference types, we allow multiple pointers to point the same memory location or object. 
 
 Objects that have multiple pointers to them are said be aliased. Multiple paths exist by which they can be accessed:
@@ -101,7 +100,7 @@ It can very difficult to fully reason about programs with aliases since since we
 ### Aliasing and Roles
 If you have objects that are aliased, it means that they can play different roles. A problem occurs when those roles conflict. Matrices are used in a variety of APIs including `CGAffineTransform`. A matrix looks like this. 
 
-/// Add diagram for matrix
+_(Add diagram for matrix)_
 
 Below, we have a class that represents a matrix. Matrices can be represented using nested arrays, each of which represents a row.
 
@@ -132,7 +131,7 @@ multiply(a: a, b: b, into: a)
 ```
 Someone clever engineer might point out that we should change `multiply` to be `multiply(a: Matrix<Int>, b: Matrix<Int>) -> Matrix<Int>`. That is, create a an instance of `Matrix` inside the function and return that. This treating a symptom and not the problem because a and b are liable to be modified before or during the `multiply` operation. The problem is the semantics aren’t clearly established by function signature leading to the caller having a different notion of its semantics. This often leads to semantics mismatch which can result in compromising the integrity of the operation.
 
-/// Show a being populated witht the results of `a*b`
+_(Show a being populated witht the results of `a*b`)_
 
 ### Aliasing and Subclass Polymorphism
 Sub-classing in OOP is rather standard , if not simple. But this commonplace operation can make aliasing even more difficult to reason about and notice. 
@@ -170,7 +169,7 @@ setTutorFor(person: t, tutor: t)
 
 Calling the function above is totally fine and we will have a tutor, tutoring themselves. No greater construct is required to make this happen than reference types. This, is impossible with immutable objects.
 
-## Makes Programs More Understandable and Safer, Changeable
+## Safer and easier to understand and change
 
 Knowledge that an object’s properties can only be set by initializing makes these programs safer,  easier to document, reason about about, or change. In order for you to fully understand how an object affects your programs, you would have to trace through the entire program to find its points of reference, since every point of reference is potentially a point of mutation.
 
@@ -312,7 +311,9 @@ No.
 Here is why. 
 
 ## Demo
-Next you can update your site name, avatar and other options using the _config.yml file in the root of your repository (shown below).
+_(Add demo notes)_
 
+Object oriented allows us to be incredibly expressive. We can build incredibly powerful systems by allowing objects to interact freely. However we need to balance this expressiveness with control. Architectural constraints like immutability add simplicity to our systems, making them more receptive to change and welcoming to new engineers. 
 
-![_config.yml]({{ site.baseurl }}/images/config.png)
+When you are designing a system, you should think about the semantics that you necessary to make things work seamlessly. If a reference type is needed, don’t fight the system or the environment, but be careful to provide as much alias advertisement and control.
+
