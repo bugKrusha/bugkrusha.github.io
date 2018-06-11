@@ -1,3 +1,5 @@
+
+# Prepping for a talk. Please DO NOT share...
 # Immutability: Perks and Quirks
 If you have a function `f` that takes a single argument `x`, one may ask, “what does function `f` do?”
 
