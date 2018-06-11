@@ -9,9 +9,11 @@ func f(x: X) {}
 
 Well, in a world of immutability, answering this is trivial since the outcome only depends on the operations in function `f` and its argument `x`. In the world of mutation during the execution of  `f`, another function ` y`, in another part of the program, possibly on another thread can change the value of `x`,  making it nearly impossible to know what function `f` does without having intimate knowledge of function `y`.
 
+<!--- You're showing a function that doesn't return anything and asking "What does function `f` do?", _my_ answer to that question (in an immutable world) is "Who the fuck knows, it's called "f", and takes a parameter "x" of type "X" and doesn't return a value so I have literally no idea what that function does.", but then you say that answering that question is trivial... now I feel dumb, like really dumb. --->
+
 ```Swift 
 func y() {
-  /// Is this really yo x?
+  // Is this really yo x?
   x.canGoBack = false
 }
 ```
@@ -26,19 +28,19 @@ struct RGBA {
     let alpha: CGFloat
 }
 let orange = RGBA(red: 240, green: 83, blue: 5, alpha: 0.91)
-orange.red = 150 /// Not allowed
+orange.red = 150 // Not allowed
 ```
 
-It can incredibly difficult to maintain the invariants of mutable objects, causing all kinds of headaches for program verification.  Aliasing makes it possible for objects to be modified by their aliases, making it difficult to understand,  maintain, or make changes to your code.
+It can be incredibly difficult to maintain the invariants of mutable objects, causing all kinds of headaches for program verification.  Aliasing makes it possible for objects to be modified by their aliases, making it difficult to understand,  maintain, or make changes to your code.
 
 However, mutable objects are a critical part of OOP and are suited for situations where two parts of a program need to communicate conveniently by sharing a common mutable data structure. 
 
-Swift espouses performance and safety which is reflected in the fact that over 90% of the types in its standard library are value types. Initializing, assigning, or passing a value type leads to the creation of an  independent copy,  making things significantly easier to reason about.
+Swift espouses performance and safety which is reflected by the fact that over 90% of the types in its standard library are value types. Initializing, assigning, or passing a value type leads to the creation of an independent copy, making things significantly easier to reason about.
 
-Of course, it is a little more complicated than that and there are definitely quirks that you should be aware of. Let’s dig little a deeper and and I will share a war story about  how choosing a value type lead to the most perplexing bug I have ever encountered.
+Of course, it is a little more complicated than that and there are definitely quirks that you should be aware of. Let’s dig little a deeper and I will share a war story about how choosing a value type lead to the most perplexing bug I have ever encountered.
 
 ## Types of Immutability
-There are two types of immutability, deep and shallow which can lead to some some unexpected behavior. 
+There are two types of immutability: deep and shallow. This can lead to some unexpected behavior. 
 
 ### Shallow
 In shallow immutability, you are not allowed to re-assign an object’s fields, but you can mutate them.
@@ -49,10 +51,10 @@ struct SvgPathElement {
 }
 
 let group = SvgPathElement(path: UIBezierPath())
-group.path = UIBezierPath() /// Illegal under shallow immutability
+group.path = UIBezierPath() // Illegal under shallow immutability
 let timbuk: CGFloat = 2.0
 let tu: CGFloat = 4.0 
-group.path.addLine(to: CGPoint(x: timbuk, y: tu)) /// Legal under shallow immutability.
+group.path.addLine(to: CGPoint(x: timbuk, y: tu)) // Legal under shallow immutability.
 ```
 
 ### Deep
@@ -72,14 +74,14 @@ struct Car {
     let color: RGBA
     let engine: Engine
     
-    /// ....
+    // ....
 }
 
 let orange = RGBA(red: 240, green: 83, blue: 5, alpha: 0.91)
 
 let red = RGBA(red: 194, green: 0, blue: 0, alpha: 1)
 let car = Car(color: orange, engine: Engine(type: .standard))
-car.color = red /// Not allowed
+car.color = red // Not allowed
 car.engine.type = .automatic // Not allowed
 ```
 ## Immutability: Perks
@@ -88,16 +90,16 @@ There are many reasons immutable ojects are preferrable. Here we will explore tw
 2. Safer and easier to understand.
 
 ### Aliasing: The Root of All Evil
-Backing OOP is the idea of encapsulating abstract data in logical containers referred to as objects. They have state and behavior and an interface.  But single objects are not interesting. For an object to be useful, they have to be part of a system of objects that interacts with each other’s interface. A system of objects is not necessarily encapsulated. In Swift, with reference types, we allow multiple pointers to point the same memory location or object. 
+Backing OOP is the idea of encapsulating abstract data in logical containers referred to as objects. They have state and behavior and an interface. But single objects are not interesting. For an object to be useful, they have to be part of a system of objects that interact with each other’s interfaces. A system of objects is not necessarily encapsulated. In Swift, with reference types, we allow multiple pointers to point to the same memory location or object. 
 
 Objects that have multiple pointers to them are said be aliased. Multiple paths exist by which they can be accessed:
 1. `self`
 2. A global variable accessible from a function.
 3. A parameter passed in to a function.
 4. A parameter returned from a function.
-5. A local variable in a function bound to anyone of the above. 
+5. A local variable in a function bound to any of the above. 
 
-It can very difficult to fully reason about programs with aliases since since we would need to survey the whole system at run-time to understand the implications of state changes.
+It can very difficult to fully reason about programs with aliases since we would need to survey the whole system at run-time to understand the implications of state changes.
 
 #### Aliasing and Roles
 If you have objects that are aliased, it means that they can play different roles. A problem occurs when those roles conflict. Matrices are used in a variety of APIs including `CGAffineTransform`. A matrix looks like this. 
@@ -116,27 +118,29 @@ class Matrix<T>  {
 }
 ```
 
-Here is a function that multiplys a matrix.
+Here is a function that multiplies a matrix.
 
 ```Swift 
 func multiply(a: Matrix<Int>, b: Matrix<Int>, into c: Matrix<Int>) {
-    ///...
+    //...
 }
 ```
 
-Multiply as defined above expects `a` to be a source and `into` to be a destination but `a` is playing both source and destination. This is clearly dangerous because as the operation goes on, we are modifying `a` with the results of `a * b`.
+Multiply as defined above expects `a` to be a source and `c` to be a destination but `a` is playing both source and destination. This is clearly dangerous because as the operation goes on, we are modifying `a` with the results of `a * b`.
+
+<!--- I'm assuming there will be more code added to the multiply function above to make this paragraph true? --->
 
 ```Swift
 let a = Matrix<Int>(backing: [[1, 8], [4, 5]])
 let b = Matrix<Int>(backing: [[3, 9], [2, 6]])
 multiply(a: a, b: b, into: a)
 ```
-Someone clever engineer might point out that we should change `multiply` to be `multiply(a: Matrix<Int>, b: Matrix<Int>) -> Matrix<Int>`. That is, create a an instance of `Matrix` inside the function and return that. This treating a symptom and not the problem because a and b are liable to be modified before or during the `multiply` operation. The problem is the semantics aren’t clearly established by function signature leading to the caller having a different notion of its semantics. This often leads to semantics mismatch which can result in compromising the integrity of the operation.
+Some clever engineer might point out that we should change `multiply` to be `multiply(a: Matrix<Int>, b: Matrix<Int>) -> Matrix<Int>`. That is, create an instance of `Matrix` inside the function and return that. That would be treating a symptom and not the problem because `a` and `b` are liable to be modified before or during the `multiply` operation. The problem is the semantics aren’t clearly established by function signature leading to the caller having a different notion of its semantics. This often leads to semantics mismatch which can result in compromising the integrity of the operation.
 
 _(Show a being populated witht the results of `a*b`)_
 
 #### Aliasing and Subclass Polymorphism
-Sub-classing in OOP is rather standard , if not simple. But this commonplace operation can make aliasing even more difficult to reason about and notice. 
+Sub-classing in OOP is rather standard <!-- I'd probably use "common" instead of "standard" here -->, if not simple. But this commonplace operation can make aliasing even more difficult to reason about and notice. 
 
 ```Swift
 class Person {
@@ -150,30 +154,37 @@ class Person {
 }
 
 class Tutor: Person {
-    override init(name: String, age: Int) {
+    var subjects: [String]
+    
+    override init(name: String, age: Int, subjects: [String]) {
+        self.subjects = subjects
         super.init(name: name, age: age)
     }
 }
 
 class Department {
     func setTutorFor(person: Person, tutor: Tutor) {
-       /// ...
+       // ...
     }
 }
 ```
+<!--- I added a subjects property to the Tutor class to make it have something that separates from the Person class, take it or leave it :) --->
 
-Here we have `Person` as a class and `Tutor` which is sub-class of `Person`. We also have department as a class that can set up a tutor for a person attendign this institution.
+Here we have `Person` as a class and `Tutor` which is sub-class of `Person`. We also have department as a class that can set up a tutor for a person attending this institution.
 
 ```Swift
-let t = Tutor(name: "Tee", age: 45)
+let t = Tutor(name: "Tee", age: 45, subjects: ["Math"])
 setTutorFor(person: t, tutor: t)
 ```
 
-Calling the function above is totally fine and we will have a tutor, tutoring themselves. No greater construct is required to make this happen than reference types. This, is impossible with immutable objects.
+Calling the function above is totally fine and we will have a tutor, tutoring themselves. No greater construct is required to make this happen than reference types. This is impossible with immutable objects.
+
+<!--- 🤔 You say "No greater construct is required to make this happen than reference types." but this could easily be done with value types with mutable properties. As a matter of fact in the above code with the definitions you could just change them all from `class` to `struct` and the only other change you'd have to make is adding the `mutating` keyword to the `setTutorFor` function. Well... except for the subclassing bit... but that seems beside the point to me. Or maybe I'm missing the point? --->
 
 ## Safer and easier to understand and change
 
-Knowledge that an object’s properties can only be set by initializing makes these programs safer,  easier to document, reason about about, or change. In order for you to fully understand how an object affects your programs, you would have to trace through the entire program to find its points of reference, since every point of reference is potentially a point of mutation.
+Knowledge that an object’s properties can only be set at initilization makes these programs safer and easier to document, reason about, and change. In order for you to fully understand how an object affects your programs, you would have to trace through the entire program to find its points of reference, since every point of reference is potentially a point of mutation. 
+<!--- and even then you have to be able to load up different timing scenarios in your head and hope you didn't miss any! --->
 
 ### Passing Mutable Values
 
@@ -211,31 +222,31 @@ homePricesStack.push(value: 850000)
 homePricesStack.push(value: 575000)
 ```
 
-Here we have a stack tracking prices for homes sold in Seattle, 3 so far. We needed to be able to find the median price of the homes sold so far so we created find median value of the homes sold. 
+Here we have a stack tracking prices for homes sold in Seattle, 3 so far. We needed to be able to find the median price of the homes sold so far so we created `findMedian(_:)` to do just that. 
 
 ```Swift
-func findMedian(stack: Stack<Int>) -> Int {
+func findMedian(_ stack: Stack<Int>) -> Int {
     stack.list.sort()
 
     let index = (stack.count - 1) / 2
     if stack.count % 2 == 0 {
-        return stack.list[index] + stack.list[index + 1]
+        return (stack.list[index] + stack.list[index + 1]) / 2
     }
 
     return stack.list[index]
 }
 ```
 
-We call median and we get the expected result. So far, so good. But now, we need to get the last value added to the stack. Is there a conflict here between what should `pop` return and what it will pop return? The answers might surprise you.
+We call median and we get the expected result. So far, so good. But now, we need to get the last value added to the stack. Is there a conflict here between what `pop` should return and what `pop` will return? The answers might surprise you.
 
 ```swift
 findMedian(stack: homePricesStack) // 760000
 homePricesStack.pop() // 850000, should be 575000
 ```
 
-Passing around mutable objects around can lead to latent bugs ( It is an existing error that has yet not caused a failure because the exact condition was never fulfilled).
+Passing around mutable objects can lead to latent bugs (an existing error that has yet not caused a failure because the exact condition was never fulfilled).
 
-Is it easy to understand what’s going on here?  Is this safe?
+Is it easy to understand what’s going on here? Is this safe?
 
 This is not the case with immutable objects.
 
@@ -249,7 +260,7 @@ Let’s say you are displaying elements from an svg file, something like this, a
 </svg>
 ```
 
-The `d` attribute is a string that contains information about how a path should be drawn. So we wrote a function to generate a UIBezierPath from this element and a function get the path. 
+The `d` attribute is a string that contains information about how a path should be drawn. So we wrote a function to generate a UIBezierPath from this element and a function to get the path. 
 
 ```Swift
 /// Converting the dpath from an svg file into a bezier path.
@@ -259,7 +270,7 @@ The `d` attribute is a string that contains information about how a path should 
 func convertToBezierPath(dpath: String) -> UIBezierPath {
     let path = UIBezierPath()
     
-    /// ....
+    // ...
     
     return path
 }
@@ -269,9 +280,9 @@ func elementBezier() -> UIBezierPath {
 }
 ```
 
-Then,  two critical things happen.
+Then two critical things happen.
 
-One, engineer determined that  `convertToBezierPath` is an expensive operation, we cached the result, the first time the method is called.
+First, we determined that `convertToBezierPath` is an expensive operation, so we cached the result the first time the method is called:
 
 ```Swift 
 /// Accessible to functions in class
@@ -286,7 +297,7 @@ func elementBezier() -> UIBezierPath {
 ```
 This seems helpful and appears innocuous. 
 
-Second, we decided to get a generate a thumbnail to show the all or elements in a collection view. The engineering implement this decided that the path is too big for a thumbnail so the scale the path down to their desired size.
+Second, we decided to generate a thumbnail to show all of the elements in a collection view. The engineer implementing this decided that the path was too big for a thumbnail and scaled the path down to their desired size.
 
 ```Swift 
 func thumbnailGeneration() {
@@ -302,8 +313,8 @@ What's the result here? Who will find this bug first? Would it be `pathForThumba
 Immutability facilitates code changes since once an object is created, it can’t be changed, so any code that depends on an immutable object can be _trusted_ and won’t need revision when a code change is made.
 
 ### Why do Roles Conflict?
-In some cases, aliasing occurs because of insufficient analysis leading to roles conflicting. But, I think they probably occur more because they design and implementation of programs fails to take the possibility of aliasing into consideration, or you disallow aliasing without making it clear to the clients using your API. **Either way, objects are declared with variable names describing their role but are manipulated based on their identities**.
-let 
+In some cases, aliasing occurs because of insufficient analysis leading to roles conflicting. But I think they probably occur more because the design and implementation of programs fails to take the possibility of aliasing into consideration, or you disallow aliasing without making it clear to the clients using your API. **Either way, objects are declared with variable names describing their role but are manipulated based on their identities**.
+let <!-- what? -->
 
 Therefore, in object oriented environments, aliasing is always present and as long as we are using mutable objects, it is going to cause problems. If you remove the possibility of aliasing, all of this goes away.
 
@@ -315,7 +326,7 @@ Here is why.
 ## Demo
 _(Add demo notes)_
 
-Object oriented allows us to be incredibly expressive. We can build incredibly powerful systems by allowing objects to interact freely. However we need to balance this expressiveness with control. Architectural constraints like immutability add simplicity to our systems, making them more receptive to change and welcoming to new engineers. 
+Object oriented design allows us to be incredibly expressive. We can build incredibly powerful systems by allowing objects to interact freely. However we need to balance this expressiveness with control. Architectural constraints like immutability add simplicity to our systems, making them more receptive to change and welcoming to new engineers. 
 
-When you are designing a system, you should think about the semantics that you necessary to make things work seamlessly. If a reference type is needed, don’t fight the system or the environment, but be careful to provide as much alias advertisement and control.
+When you are designing a system, you should think about the semantics that are necessary to make things work seamlessly. If a reference type is needed, don’t fight the system or the environment, but be careful to provide as much alias advertisement and control as possible.
 
