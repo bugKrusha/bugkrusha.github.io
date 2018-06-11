@@ -99,7 +99,7 @@ Objects that have multiple pointers to them are said be aliased. Multiple paths 
 4. A parameter returned from a function.
 5. A local variable in a function bound to any of the above. 
 
-It can very difficult to fully reason about programs with aliases since we would need to survey the whole system at run-time to understand the implications of state changes.
+It can be very difficult to fully reason about programs with aliases since we would need to survey the whole system at run-time to understand the implications of state changes.
 
 #### Aliasing and Roles
 If you have objects that are aliased, it means that they can play different roles. A problem occurs when those roles conflict. Matrices are used in a variety of APIs including `CGAffineTransform`. A matrix looks like this. 
