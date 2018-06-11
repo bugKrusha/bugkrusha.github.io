@@ -80,12 +80,12 @@ let car = Car(color: orange, engine: Engine(type: .standard))
 car.color = red /// Not allowed
 car.engine.type = .automatic // Not allowed
 ```
-
+## Immutability: Perks
 There are many reasons immutable ojects are preferrable. Here we will explore two:
 1. No Aliasing
 2. Safer and easier to understand.
 
-## Aliasing: The Root of All Evil
+### Aliasing: The Root of All Evil
 Backing OOP is the idea of encapsulating abstract data in logical containers referred to as objects. They have state and behavior and an interface.  But single objects are not interesting. For an object to be useful, they have to be part of a system of objects that interacts with each other’s interface. A system of objects is not necessarily encapsulated. In Swift, with reference types, we allow multiple pointers to point the same memory location or object. 
 
 Objects that have multiple pointers to them are said be aliased. Multiple paths exist by which they can be accessed:
@@ -97,7 +97,7 @@ Objects that have multiple pointers to them are said be aliased. Multiple paths 
 
 It can very difficult to fully reason about programs with aliases since since we would need to survey the whole system at run-time to understand the implications of state changes.
 
-### Aliasing and Roles
+#### Aliasing and Roles
 If you have objects that are aliased, it means that they can play different roles. A problem occurs when those roles conflict. Matrices are used in a variety of APIs including `CGAffineTransform`. A matrix looks like this. 
 
 _(Add diagram for matrix)_
@@ -133,7 +133,7 @@ Someone clever engineer might point out that we should change `multiply` to be `
 
 _(Show a being populated witht the results of `a*b`)_
 
-### Aliasing and Subclass Polymorphism
+#### Aliasing and Subclass Polymorphism
 Sub-classing in OOP is rather standard , if not simple. But this commonplace operation can make aliasing even more difficult to reason about and notice. 
 
 ```Swift
