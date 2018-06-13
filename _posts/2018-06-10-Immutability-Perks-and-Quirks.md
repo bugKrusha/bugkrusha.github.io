@@ -39,7 +39,7 @@ let orange = RGBA(red: 240, green: 83, blue: 5, alpha: 0.91)
 orange.red = 150 /// Not allowed
 ```
 
-Share mutable objects makes it possible for objects to be modified by their aliases, making it difficult to understand,  maintain, or make changes to your code.
+Share mutable objects makes it possible for objects to be modified by their references, making it difficult to understand,  maintain, or make changes to your code.
 
 ```Swift
 class Person {
@@ -53,7 +53,7 @@ class Person {
 }
 
 let jazbo = Person(name: "Jazbo", age: 70)
-let jonTait = jazbo // An alias of jazbo 
+let jonTait = jazbo // A reference to jazbo 
 ```
 
 However, mutable objects are a critical part of OOP and are suited for situations where two parts of a program need to communicate conveniently by sharing a common mutable data structure. 
@@ -108,19 +108,24 @@ struct SvgPathElement {
 }
 
 let group = SvgPathElement(path: UIBezierPath())
+let groupTwo = group
+
 group.path = UIBezierPath() // Not allowed
 let timbuk: CGFloat = 2.0
 let tu: CGFloat = 4.0 
 group.path.addLine(to: CGPoint(x: timbuk, y: tu)) // Allowed
+
+groupTwo.path
+// show new path
 ```
 
 ## Immutability: Perks
 There are many reasons immutable ojects are preferrable. Here we will explore two:
-1. No Aliasing
+1. No Referencing
 2. Safer and easier to understand.
 
-### Aliasing: The Root of All Evil
-Backing OOP is the idea of encapsulating abstract data in logical containers referred to as objects. They have state and behavior and an interface.  But single objects are not interesting. For an object to be useful, they have to be part of a system of objects that interacts with each other’s interface. A system of objects is not necessarily encapsulated. In Swift, with reference types, we allow multiple pointers to point the same memory location or object. Objects that have multiple pointers to them are said be aliased. Multiple paths exist by which they can be accessed:
+### Referencing: The Root of All Evil
+Backing OOP is the idea of encapsulating abstract data in logical containers referred to as objects. They have state and behavior and an interface.  But single objects are not interesting. For an object to be useful, they have to be part of a system of objects that interacts with each other’s interface. A system of objects is not necessarily encapsulated. In Swift, with reference types, we allow multiple pointers to point the same memory location or object. Multiple paths exist by which they can be accessed:
 
 1. `self`
 2. A global variable accessible from a function.
@@ -128,10 +133,10 @@ Backing OOP is the idea of encapsulating abstract data in logical containers ref
 4. A parameter returned from a function.
 5. A local variable in a function bound to anyone of the above. 
 
-It can very difficult to fully reason about programs with aliases since since we would need to survey the whole system at run-time to understand the implications of state changes.
+It can very difficult to fully reason about programs with references since since we would need to survey the whole system at run-time to understand the implications of state changes.
 
-#### Aliasing and Roles
-If you have objects that are aliased, it means that they can play different roles. A problem occurs when those roles conflict. Matrices are used in a variety of APIs including `CGAffineTransform`. A matrix looks like this. 
+#### Reference Types and Roles
+If you have objects that are refernced, it means that they can play different roles. A problem occurs when those roles conflict. Matrices are used in a variety of APIs including `CGAffineTransform`. A matrix looks like this. 
 
 _(Add diagram for matrix)_
 
@@ -167,7 +172,7 @@ Someone clever engineer might point out that we should change `multiply` to be `
 
 _(Show a being populated with the results of `a*b`)_
 
-#### Aliasing and Subclass Polymorphism
+#### Reference Types and Subclass Polymorphism
 Sub-classing in OOP is rather standard , if not simple. But this commonplace operation can make aliasing even more difficult to reason about and notice. 
 
 ```Swift
@@ -207,7 +212,7 @@ Calling the function above is totally fine and we will have a tutor, tutoring th
 
 Knowledge that an object’s properties can only be set by initializing makes these programs safer,  easier to document, reason about about, or change. In order for you to fully understand how an object affects your programs, you would have to trace through the entire program to find its points of reference, since every point of reference is potentially a point of mutation.
 
-### Passing Mutable Values
+### Passing Reference Types
 
 ```Swift
 class Stack<T: Comparable> {
@@ -271,7 +276,7 @@ Is it easy to understand what’s going on here?  Is this safe?
 
 This is not the case with immutable objects.
 
-### Returning Mutable Objects
+### Returning Reference Types
 Let’s say you are displaying elements from an svg file, something like this, a simple triangle.
 
 ```xml
