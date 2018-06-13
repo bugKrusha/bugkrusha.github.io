@@ -1,18 +1,28 @@
 
 # Prepping for a talk. Please DO NOT share...
 # Immutability: Perks and Quirks
-If you have a function `f` that takes a single argument `x`, one may ask, “what does function `f` do?”
-
-```Swift
-func f(x: X) {}
-```
-
-Well, in a world of immutability, answering this is trivial since the outcome only depends on the operations in function `f` and its argument `x`. In the world of mutation during the execution of  `f`, another function ` y`, in another part of the program, possibly on another thread can change the value of `x`,  making it nearly impossible to know what function `f` does without having intimate knowledge of function `y`.
+If you have a function `createThumbnail` that takes a single argument `path`, one may ask, “what does this function do?”
 
 ```Swift 
-func y() {
-  /// Is this really yo x?
-  x.canGoBack = false
+func createThumbnail(path: UIBezierPath) -> UIImage {
+    // ...
+}
+```
+
+In a world of mutable shared state, during the execution of this function, another function, say `apply(scale: CGFloat,to path: UIBezierPath)` with access to the same path, in another part of the program, possibly on another thread can change the value of `path`,  making it nearly impossible to know what function `createThumbnail` does without having intimate knowledge of function `apply(scale: CGFloat`.
+
+```
+func apply(scale: CGFloat to path: UIBezierPath) {
+  /// Is this really your path?
+  path.apply(CGAffineTransform(scaleX: 0.25, y: 0.25))
+}
+```
+
+If we changed the function signature to pass in a `CGPath`, an immutable object, reasoning about this function is trivial since the outcome only depends on the operations in function `createThumbnail` and its single argument `path`.
+
+```Swift
+func createThumbnail(path: CGPath) -> UIImage {
+    // ...
 }
 ```
 
@@ -29,34 +39,37 @@ let orange = RGBA(red: 240, green: 83, blue: 5, alpha: 0.91)
 orange.red = 150 /// Not allowed
 ```
 
-It can incredibly difficult to maintain the invariants of mutable objects, causing all kinds of headaches for program verification.  Aliasing makes it possible for objects to be modified by their aliases, making it difficult to understand,  maintain, or make changes to your code.
+Share mutable objects makes it possible for objects to be modified by their aliases, making it difficult to understand,  maintain, or make changes to your code.
+
+```Swift
+class Person {
+    var name: String
+    var age: Int
+    
+    init(name: String, age: Int) {
+        self.name = name
+        self.age = age
+    }
+}
+
+let jazbo = Person(name: "Jazbo", age: 70)
+let jonTait = jazbo // An alias of jazbo 
+```
 
 However, mutable objects are a critical part of OOP and are suited for situations where two parts of a program need to communicate conveniently by sharing a common mutable data structure. 
 
-Swift espouses performance and safety which is reflected in the fact that over 90% of the types in its standard library are value types. Initializing, assigning, or passing a value type leads to the creation of an  independent copy,  making things significantly easier to reason about.
+Let’s dig little a deeper and and I will share a demo about how choosing a value type lead to the most perplexing bug I have ever encountered.
 
-Of course, it is a little more complicated than that and there are definitely quirks that you should be aware of. Let’s dig little a deeper and and I will share a war story about  how choosing a value type lead to the most perplexing bug I have ever encountered.
+## Immutability in Swift
+Swift espouses safety which is reflected in the fact that over 90% of the types in its standard library are value types.
 
-## Types of Immutability
-There are two types of immutability, deep and shallow which can lead to some some unexpected behavior. 
+1. Collections
+2. Structs
+3. Enums
 
-### Shallow
-In shallow immutability, you are not allowed to re-assign an object’s fields, but you can mutate them.
+Initializing, assigning, or passing a value type leads to the creation of an  independent copy,  making things significantly easier to reason about. To achieve, immutability, you start with a value type.
 
-``` Swift
-struct SvgPathElement {
-    let path: UIBezierPath
-}
-
-let group = SvgPathElement(path: UIBezierPath())
-group.path = UIBezierPath() /// Illegal under shallow immutability
-let timbuk: CGFloat = 2.0
-let tu: CGFloat = 4.0 
-group.path.addLine(to: CGPoint(x: timbuk, y: tu)) /// Legal under shallow immutability.
-```
-
-### Deep
-In deep immutability, not only are you forbidden from re-assigning an object’s fields, you are also forbidden from mutating them.
+### Pure Value Types
 
 ```Swift
 enum EngineType {
@@ -79,18 +92,36 @@ let orange = RGBA(red: 240, green: 83, blue: 5, alpha: 0.91)
 
 let red = RGBA(red: 194, green: 0, blue: 0, alpha: 1)
 let car = Car(color: orange, engine: Engine(type: .standard))
-car.color = red /// Not allowed
+
+car.color = red // Not allowed
 car.engine.type = .automatic // Not allowed
 ```
+
+As shown here, not only are you forbidden from re-assigning an object’s fields, you are also forbidden from mutating them.
+
+### Mixing Types
+Mixing value types with reference types can lead to some unexpected behavior. You are not allowed to re-assign an object’s fields, but you can mutate them.
+
+``` Swift
+struct SvgPathElement {
+    let path: UIBezierPath
+}
+
+let group = SvgPathElement(path: UIBezierPath())
+group.path = UIBezierPath() // Not allowed
+let timbuk: CGFloat = 2.0
+let tu: CGFloat = 4.0 
+group.path.addLine(to: CGPoint(x: timbuk, y: tu)) // Allowed
+```
+
 ## Immutability: Perks
 There are many reasons immutable ojects are preferrable. Here we will explore two:
 1. No Aliasing
 2. Safer and easier to understand.
 
 ### Aliasing: The Root of All Evil
-Backing OOP is the idea of encapsulating abstract data in logical containers referred to as objects. They have state and behavior and an interface.  But single objects are not interesting. For an object to be useful, they have to be part of a system of objects that interacts with each other’s interface. A system of objects is not necessarily encapsulated. In Swift, with reference types, we allow multiple pointers to point the same memory location or object. 
+Backing OOP is the idea of encapsulating abstract data in logical containers referred to as objects. They have state and behavior and an interface.  But single objects are not interesting. For an object to be useful, they have to be part of a system of objects that interacts with each other’s interface. A system of objects is not necessarily encapsulated. In Swift, with reference types, we allow multiple pointers to point the same memory location or object. Objects that have multiple pointers to them are said be aliased. Multiple paths exist by which they can be accessed:
 
-Objects that have multiple pointers to them are said be aliased. Multiple paths exist by which they can be accessed:
 1. `self`
 2. A global variable accessible from a function.
 3. A parameter passed in to a function.
@@ -116,7 +147,7 @@ class Matrix<T>  {
 }
 ```
 
-Here is a function that multiplys a matrix.
+Here is a function that multiplies a matrix.
 
 ```Swift 
 func multiply(a: Matrix<Int>, b: Matrix<Int>, into c: Matrix<Int>) {
@@ -131,9 +162,10 @@ let a = Matrix<Int>(backing: [[1, 8], [4, 5]])
 let b = Matrix<Int>(backing: [[3, 9], [2, 6]])
 multiply(a: a, b: b, into: a)
 ```
-Someone clever engineer might point out that we should change `multiply` to be `multiply(a: Matrix<Int>, b: Matrix<Int>) -> Matrix<Int>`. That is, create a an instance of `Matrix` inside the function and return that. This treating a symptom and not the problem because a and b are liable to be modified before or during the `multiply` operation. The problem is the semantics aren’t clearly established by function signature leading to the caller having a different notion of its semantics. This often leads to semantics mismatch which can result in compromising the integrity of the operation.
 
-_(Show a being populated witht the results of `a*b`)_
+Someone clever engineer might point out that we should change `multiply` to be `multiply(a: Matrix<Int>, b: Matrix<Int>) -> Matrix<Int>`. That is, create a an instance of `Matrix` inside the function and return that. This treating a symptom and not the problem because `a` and `b` are liable to be modified before or during the `multiply` operation. The problem is the function signature doesn't make it clear that the parameters can be mutated, which can lead to the caller and the function having different notions of the world.
+
+_(Show a being populated with the results of `a*b`)_
 
 #### Aliasing and Subclass Polymorphism
 Sub-classing in OOP is rather standard , if not simple. But this commonplace operation can make aliasing even more difficult to reason about and notice. 
@@ -169,7 +201,7 @@ let t = Tutor(name: "Tee", age: 45)
 setTutorFor(person: t, tutor: t)
 ```
 
-Calling the function above is totally fine and we will have a tutor, tutoring themselves. No greater construct is required to make this happen than reference types. This, is impossible with immutable objects.
+Calling the function above is totally fine and we will have a tutor, tutoring themselves. No greater construct is required to make this happen than reference types.
 
 ## Safer and easier to understand and change
 
@@ -202,7 +234,7 @@ class Stack<T: Comparable> {
 }
 ```
 
-A stack is a first in, last out data structure, something you could get from stacking books. Push would add a book to the list and pop would remove the last value added.
+A stack is a first in, last out data structure, something you could get from stacking books. Push adds a book to the top of the stack and pop takes the top book off of the stack.
 
 ```Swift
 let homePricesStack = Stack<Int>()
@@ -219,7 +251,7 @@ func findMedian(stack: Stack<Int>) -> Int {
 
     let index = (stack.count - 1) / 2
     if stack.count % 2 == 0 {
-        return stack.list[index] + stack.list[index + 1]
+        return (stack.list[index] + stack.list[index + 1]) / 2
     }
 
     return stack.list[index]
@@ -307,7 +339,7 @@ let
 
 Therefore, in object oriented environments, aliasing is always present and as long as we are using mutable objects, it is going to cause problems. If you remove the possibility of aliasing, all of this goes away.
 
-### So, should we default to immutable objects?
+### So, should we default to value types?
 No.
 
 Here is why. 
@@ -315,7 +347,7 @@ Here is why.
 ## Demo
 _(Add demo notes)_
 
-Object oriented allows us to be incredibly expressive. We can build incredibly powerful systems by allowing objects to interact freely. However we need to balance this expressiveness with control. Architectural constraints like immutability add simplicity to our systems, making them more receptive to change and welcoming to new engineers. 
+Object oriented allows us to be incredibly expressive. We can build incredibly powerful systems by allowing objects to interact freely. However we need to balance this expressiveness with control. Architectural constraints like immutability add simplicity to our systems, making them more receptive to change and welcoming to new engineers, and even our future selves. 
 
 When you are designing a system, you should think about the semantics that you necessary to make things work seamlessly. If a reference type is needed, don’t fight the system or the environment, but be careful to provide as much alias advertisement and control.
 
