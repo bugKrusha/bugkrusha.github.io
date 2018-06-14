@@ -9,16 +9,16 @@ func createThumbnail(path: UIBezierPath) -> UIImage {
 }
 ```
 
-In a world of mutable shared state, during the execution of this function, another function, say `apply(scale: CGFloat,to path: UIBezierPath)` with access to the same path, in another part of the program, possibly on another thread can change the value of `path`,  making it nearly impossible to know what function `createThumbnail` does without having intimate knowledge of function `apply(scale: CGFloat`.
+In a world with shared reference types, during the execution of this function, another function, say `apply(scale: CGFloat,to path: UIBezierPath)` with access to the same path, in another part of the program, possibly on another thread can change the value of `path`,  making it nearly impossible to know what function `createThumbnail` does without having intimate knowledge of function `apply(scale: CGFloat`.
 
-```
+```Swift
 func apply(scale: CGFloat to path: UIBezierPath) {
   /// Is this really your path?
   path.apply(CGAffineTransform(scaleX: 0.25, y: 0.25))
 }
 ```
 
-If we changed the function signature to pass in a `CGPath`, an immutable object, reasoning about this function is trivial since the outcome only depends on the operations in function `createThumbnail` and its single argument `path`.
+If we changed the function signature so that it takes in a `CGPath`, an immutable object, reasoning about this function is trivial since the outcome only depends on the operations in function `createThumbnail` and its single argument `path`.
 
 ```Swift
 func createThumbnail(path: CGPath) -> UIImage {
@@ -56,7 +56,7 @@ let jazbo = Person(name: "Jazbo", age: 70)
 let jonTait = jazbo // A reference to jazbo 
 ```
 
-However, mutable objects are a critical part of OOP and are suited for situations where two parts of a program need to communicate conveniently by sharing a common mutable data structure. 
+However, mutable objects or references are a critical part of OOP and are suited for situations where two parts of a program need to communicate conveniently by sharing a common mutable data structure. 
 
 Let’s dig little a deeper and and I will share a demo about how choosing a value type lead to the most perplexing bug I have ever encountered.
 
@@ -67,7 +67,7 @@ Swift espouses safety which is reflected in the fact that over 90% of the types 
 2. Structs
 3. Enums
 
-Initializing, assigning, or passing a value type leads to the creation of an  independent copy,  making things significantly easier to reason about. To achieve, immutability, you start with a value type.
+Initializing, assigning, or passing a value type leads to the creation of an  independent copy,  making things significantly easier to reason about. To achieve immutability, you start with a value type.
 
 ### Pure Value Types
 
@@ -203,10 +203,10 @@ Here we have `Person` as a class and `Tutor` which is sub-class of `Person`. We 
 
 ```Swift
 let t = Tutor(name: "Tee", age: 45)
-setTutorFor(person: t, tutor: t)
+department.setTutorFor(person: t, tutor: t)
 ```
 
-Calling the function above is totally fine and we will have a tutor, tutoring themselves. No greater construct is required to make this happen than reference types.
+Calling the function above is totally fine and we will have a tutor, tutoring themselves. No greater construct is required to make this happen than reference types. 
 
 ## Safer and easier to understand and change
 
@@ -308,7 +308,7 @@ func elementBezier() -> UIBezierPath {
 
 Then,  two critical things happen.
 
-One, engineer determined that  `convertToBezierPath` is an expensive operation, we cached the result, the first time the method is called.
+One, an engineer determined that `convertToBezierPath` is an expensive operation, so they ccached the result the first time the method is called.
 
 ```Swift 
 /// Accessible to functions in class
@@ -339,10 +339,10 @@ What's the result here? Who will find this bug first? Would it be `pathForThumba
 Immutability facilitates code changes since once an object is created, it can’t be changed, so any code that depends on an immutable object can be _trusted_ and won’t need revision when a code change is made.
 
 ### Why do Roles Conflict?
-In some cases, aliasing occurs because of insufficient analysis leading to roles conflicting. But, I think they probably occur more because they design and implementation of programs fails to take the possibility of aliasing into consideration, or you disallow aliasing without making it clear to the clients using your API. **Either way, objects are declared with variable names describing their role but are manipulated based on their identities**.
+In some cases, errors references occurs because of insufficient analysis leading to roles conflicting. But, I think they probably occur more because the design and implementation of programs fails to take the possibility of referencing into consideration, or you disallow aliasing without making it clear to the clients using your API. **Either way, objects are declared with variable names describing their role but are manipulated based on their identities**.
 let 
 
-Therefore, in object oriented environments, aliasing is always present and as long as we are using mutable objects, it is going to cause problems. If you remove the possibility of aliasing, all of this goes away.
+Therefore, in object oriented environments, referencing is always present and as long as we are using mutable objects, it is going to cause problems. If you remove the possibility of aliasing, all of this goes away.
 
 ### So, should we default to value types?
 No.
@@ -354,5 +354,5 @@ _(Add demo notes)_
 
 Object oriented allows us to be incredibly expressive. We can build incredibly powerful systems by allowing objects to interact freely. However we need to balance this expressiveness with control. Architectural constraints like immutability add simplicity to our systems, making them more receptive to change and welcoming to new engineers, and even our future selves. 
 
-When you are designing a system, you should think about the semantics that you necessary to make things work seamlessly. If a reference type is needed, don’t fight the system or the environment, but be careful to provide as much alias advertisement and control.
+When you are designing a system, you should think about the semantics that you necessary to make things work seamlessly. If a reference type is needed, don’t fight the system or the environment, but be careful to provide as much reference advertisement and control.
 
