@@ -39,7 +39,7 @@ let orange = RGBA(red: 240, green: 83, blue: 5, alpha: 0.91)
 orange.red = 150 /// Not allowed
 ```
 
-Share mutable objects makes it possible for objects to be modified by their references, making it difficult to understand,  maintain, or make changes to your code.
+Share mutable objects make it possible for objects to be modified by their references, making it difficult to understand,  maintain, or make changes to your code.
 
 ```Swift
 class Person {
