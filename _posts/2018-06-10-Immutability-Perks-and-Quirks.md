@@ -67,7 +67,7 @@ Swift espouses safety which is reflected in the fact that over 90% of the types 
 2. Structs
 3. Enums
 
-Initializing, assigning, or passing a value type leads to the creation of an  independent copy,  making things significantly easier to reason about. To achieve immutability, you start with a value type.
+To achieve immutability in Swift, we lean on value types. Initializing, assigning, or passing a value type leads to the creation of an  independent copy,  making things significantly easier to reason about. 
 
 ### Pure Value Types
 
@@ -133,7 +133,7 @@ Backing OOP is the idea of encapsulating abstract data in logical containers ref
 4. A parameter returned from a function.
 5. A local variable in a function bound to anyone of the above. 
 
-It can very difficult to fully reason about programs with references since since we would need to survey the whole system at run-time to understand the implications of state changes.
+It can be very difficult to fully reason about programs with references since since we would need to survey the whole system at run-time to understand the implications of state changes.
 
 #### Reference Types and Roles
 If you have objects that are refernced, it means that they can play different roles. A problem occurs when those roles conflict. Matrices are used in a variety of APIs including `CGAffineTransform`. A matrix looks like this. 
@@ -160,7 +160,7 @@ func multiply(a: Matrix<Int>, b: Matrix<Int>, into c: Matrix<Int>) {
 }
 ```
 
-Multiply as defined above expects `a` to be a source and `into` to be a destination but `a` is playing both source and destination. This is clearly dangerous because as the operation goes on, we are modifying `a` with the results of `a * b`.
+Multiply as defined above expects `a` to be a source and `c` to be a destination but `a` is playing both source and destination. This is clearly dangerous because as the operation goes on, we are modifying `a` with the results of `a * b`.
 
 ```Swift
 let a = Matrix<Int>(backing: [[1, 8], [4, 5]])
@@ -199,7 +199,7 @@ class Department {
 }
 ```
 
-Here we have `Person` as a class and `Tutor` which is sub-class of `Person`. We also have department as a class that can set up a tutor for a person attendign this institution.
+Here we have `Person` as a class and `Tutor` which is sub-class of `Person`. We also have department as a class that can set up a tutor for a person attending this institution.
 
 ```Swift
 let t = Tutor(name: "Tee", age: 45)
@@ -340,9 +340,8 @@ Immutability facilitates code changes since once an object is created, it can’
 
 ### Why do Roles Conflict?
 In some cases, errors references occurs because of insufficient analysis leading to roles conflicting. But, I think they probably occur more because the design and implementation of programs fails to take the possibility of referencing into consideration, or you disallow aliasing without making it clear to the clients using your API. **Either way, objects are declared with variable names describing their role but are manipulated based on their identities**.
-let 
 
-Therefore, in object oriented environments, referencing is always present and as long as we are using mutable objects, it is going to cause problems. If you remove the possibility of aliasing, all of this goes away.
+Therefore, in object oriented environments, referencing is always present and as long as we are using mutable objects, it is going to cause problems. If you remove the possibility of referencing, all of this goes away.
 
 ### So, should we default to value types?
 No.
