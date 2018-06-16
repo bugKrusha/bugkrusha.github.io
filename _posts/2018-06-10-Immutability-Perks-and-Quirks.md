@@ -72,18 +72,18 @@ To achieve immutability in Swift, we lean on value types. Initializing, assignin
 ### Pure Value Types
 
 ```Swift
-enum EngineType {
+enum TransmissionType {
     case standard
     case automatic
 }
 
-struct Engine {
-    let type: EngineType
+struct Transmission {
+    let type: TransmissionType
 }
 
 struct Car {
     let color: RGBA
-    let engine: Engine
+    let transmission: Transmission
     
     /// ....
 }
@@ -136,7 +136,7 @@ Backing OOP is the idea of encapsulating abstract data in logical containers ref
 It can be very difficult to fully reason about programs with references since since we would need to survey the whole system at run-time to understand the implications of state changes.
 
 #### Reference Types and Roles
-If you have objects that are refernced, it means that they can play different roles. A problem occurs when those roles conflict. Matrices are used in a variety of APIs including `CGAffineTransform`. A matrix looks like this. 
+If you have objects that are referenced, it means that they can play different roles. A problem occurs when those roles conflict. Matrices are used in a variety of APIs including `CGAffineTransform`. A matrix looks like this. 
 
 _(Add diagram for matrix)_
 
@@ -351,7 +351,7 @@ Here is why.
 ## Demo
 _(Add demo notes)_
 
-Object oriented allows us to be incredibly expressive. We can build incredibly powerful systems by allowing objects to interact freely. However we need to balance this expressiveness with control. Architectural constraints like immutability add simplicity to our systems, making them more receptive to change and welcoming to new engineers, and even our future selves. 
+Object oriented allows us to be incredibly expressive. We can build incredibly powerful systems by allowing objects to interact freely. However we need to balance this expressiveness with control. Architectural constraints like immutability help to bring simplicity to our systems, making them safer, receptive to change, and welcoming to new engineers, and even our future selves. Value types can be mutated but independent copies are created when passing them around. If someones changes their copy, those changes won't be reflected in yours. 
 
 When you are designing a system, you should think about the semantics that you necessary to make things work seamlessly. If a reference type is needed, don’t fight the system or the environment, but be careful to provide as much reference advertisement and control.
 
