@@ -85,7 +85,7 @@ struct Car {
     let color: RGBA
     let transmission: Transmission
     
-    /// ....
+    // ....
 }
 
 let orange = RGBA(red: 240, green: 83, blue: 5, alpha: 0.91)
@@ -125,7 +125,7 @@ There are many reasons immutable ojects are preferrable. Here we will explore tw
 2. Safer and easier to understand.
 
 ### Referencing: The Root of All Evil
-Backing OOP is the idea of encapsulating abstract data in logical containers referred to as objects. They have state and behavior and an interface.  But single objects are not interesting. For an object to be useful, they have to be part of a system of objects that interacts with each other’s interface. A system of objects is not necessarily encapsulated. In Swift, with reference types, we allow multiple pointers to point the same memory location or object. Multiple paths exist by which they can be accessed:
+Backing OOP is the idea of encapsulating abstract data in logical containers referred to as objects. They have state and behavior and an interface.  But single objects are not interesting. For an object to be useful, they have to be part of a system of objects that interact with each other’s interface. A system of objects is not necessarily encapsulated. In Swift, with reference types, we allow multiple pointers to point the same memory location or object. Multiple paths exist by which they can be accessed:
 
 1. `self`
 2. A global variable accessible from a function.
@@ -168,12 +168,12 @@ let b = Matrix<Int>(backing: [[3, 9], [2, 6]])
 multiply(a: a, b: b, into: a)
 ```
 
-Someone clever engineer might point out that we should change `multiply` to be `multiply(a: Matrix<Int>, b: Matrix<Int>) -> Matrix<Int>`. That is, create a an instance of `Matrix` inside the function and return that. This treating a symptom and not the problem because `a` and `b` are liable to be modified before or during the `multiply` operation. The problem is the function signature doesn't make it clear that the parameters can be mutated, which can lead to the caller and the function having different notions of the world.
+Some clever engineer might point out that we should change `multiply` to be `multiply(a: Matrix<Int>, b: Matrix<Int>) -> Matrix<Int>`. That is, create a an instance of `Matrix` inside the function and return that. This treating a symptom and not the problem because `a` and `b` are liable to be modified before or during the `multiply` operation. The problem is the function signature doesn't make it clear that the parameters can be mutated, which can lead to the caller and the function having different notions of the world.
 
 _(Show a being populated with the results of `a*b`)_
 
 #### Reference Types and Subclass Polymorphism
-Sub-classing in OOP is rather standard , if not simple. But this commonplace operation can make aliasing even more difficult to reason about and notice. 
+Sub-classing in OOP is common, if not simple. But this commonplace operation can make problems from referencing even more difficult to reason about and notice.
 
 ```Swift
 class Person {
@@ -206,7 +206,7 @@ let t = Tutor(name: "Tee", age: 45)
 department.setTutorFor(person: t, tutor: t)
 ```
 
-Calling the function above is totally fine and we will have a tutor, tutoring themselves. No greater construct is required to make this happen than reference types. 
+Calling the function above is totally fine and we will have a tutor, tutoring themselves. No greater construct is required to make this happen than reference types. This is impossible with value types since they don't allow subclassing.
 
 ## Safer and easier to understand and change
 
@@ -248,7 +248,7 @@ homePricesStack.push(value: 850000)
 homePricesStack.push(value: 575000)
 ```
 
-Here we have a stack tracking prices for homes sold in Seattle, 3 so far. We needed to be able to find the median price of the homes sold so far so we created find median value of the homes sold. 
+Here we have a stack tracking prices for homes sold in Seattle, 3 so far. We needed to be able to find the median price of the homes sold so far so we created `findMedian(_:)` to do just that. 
 
 ```Swift
 func findMedian(stack: Stack<Int>) -> Int {
@@ -270,7 +270,7 @@ findMedian(stack: homePricesStack) // 760000
 homePricesStack.pop() // 850000, should be 575000
 ```
 
-Passing around mutable objects around can lead to latent bugs ( It is an existing error that has yet not caused a failure because the exact condition was never fulfilled).
+Passing around mutable objects can lead to latent bugs (It is an existing error that has yet not caused a failure because the exact condition was never fulfilled).
 
 Is it easy to understand what’s going on here?  Is this safe?
 
@@ -286,7 +286,7 @@ Let’s say you are displaying elements from an svg file, something like this, a
 </svg>
 ```
 
-The `d` attribute is a string that contains information about how a path should be drawn. So we wrote a function to generate a UIBezierPath from this element and a function get the path. 
+The `d` attribute is a string that contains information about how a path should be drawn. So we wrote a function to generate a UIBezierPath from this element and a function to get the path. 
 
 ```Swift
 /// Converting the dpath from an svg file into a bezier path.
@@ -306,9 +306,9 @@ func elementBezier() -> UIBezierPath {
 }
 ```
 
-Then,  two critical things happen.
+Then,  two critical things happened.
 
-One, an engineer determined that `convertToBezierPath` is an expensive operation, so they ccached the result the first time the method is called.
+First, we determined that `convertToBezierPath` is an expensive operation, so we cached the result the first time the method is called.
 
 ```Swift 
 /// Accessible to functions in class
@@ -323,7 +323,7 @@ func elementBezier() -> UIBezierPath {
 ```
 This seems helpful and appears innocuous. 
 
-Second, we decided to get a generate a thumbnail to show the all or elements in a collection view. The engineering implement this decided that the path is too big for a thumbnail so the scale the path down to their desired size.
+Second, we decided to get a generate a thumbnail to show the all or elements in a collection view. The engineering implementing this decided that the path was too big for a thumbnail and scaled it down to their desired size.
 
 ```Swift 
 func thumbnailGeneration() {
@@ -351,7 +351,7 @@ Here is why.
 ## Demo
 _(Add demo notes)_
 
-Object oriented allows us to be incredibly expressive. We can build incredibly powerful systems by allowing objects to interact freely. However we need to balance this expressiveness with control. Architectural constraints like immutability help to bring simplicity to our systems, making them safer, receptive to change, and welcoming to new engineers, and even our future selves. Value types can be mutated but independent copies are created when passing them around. If someones changes their copy, those changes won't be reflected in yours. 
+Object oriented design allows us to be incredibly expressive. We can build incredibly powerful systems by allowing objects to interact freely. However we need to balance this expressiveness with control. Architectural constraints like immutability help to bring simplicity to our systems, making them safer, receptive to change, and welcoming to new engineers, and even our future selves. Value types can be mutated but independent copies are created when passing them around. If someones changes their copy, those changes won't be reflected in yours. 
 
-When you are designing a system, you should think about the semantics that you necessary to make things work seamlessly. If a reference type is needed, don’t fight the system or the environment, but be careful to provide as much reference advertisement and control.
+When you are designing a system, you should think about the semantics that you necessary to make things work seamlessly. If a reference type is needed, don’t fight the system or the environment, but be careful to provide as much reference advertisement and control as possible.
 
