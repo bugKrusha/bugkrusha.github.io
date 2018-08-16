@@ -73,9 +73,13 @@ func drawAsciiTriangle(height: Int, ascii: Character) {
 drawAsciiTriangle(height: 5, ascii: "😘")
 ```
 😘
+
 😘😘
+
 😘😘😘
+
 😘😘😘😘
+
 😘😘😘😘😘
 
 #### Type
