@@ -315,7 +315,7 @@ Things can get complicated very fast when modeling some JSON however and there a
 {
     "meta": {
         "type": "identifier",
-        "id": "0b6a12ec-343d-4830-b029-4ed648e4c5d7"
+        "id": "0b6a12ec-343d-4830-b029-4ed648e4c5d7",
         "resource_type": "print"
     },
     "data": {
