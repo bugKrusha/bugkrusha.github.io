@@ -12,7 +12,7 @@ struct Resource<T> {
 }
 ```
 
-Generics aims to increase flexibility by expanding the possibilities of parameterization. That is, you can fill an object’s field with whatever object you desire. The `attribute` field in `Resource` above can be filled with any object. The beauty here is that generics enhances safety without _hampering_ performance. 
+Generics aims to increase flexibility by expanding the possibilities of parameterization into the type system. That is, you can fill an object’s field with whatever type you desire. The `attribute` field in `Resource` above can be filled with any type. The beauty here is that generics enhances safety without _hampering_ performance. 
 
 To different people, _Generics_ means different things. Today we will be focusing on _Parametric Polymorphism._ Sounds complicated? My friend Ian would describe this as having a million dollar name for a ten dollar concept. Parametric means “can be expressed as a parameter”, so like any of the fields in this resource object. Polymorphism? Sounds bright, not really. The prefix _poly_ means many and _morphism_ means form. So in this context, parametric polymorphism means having parameters that can be expressed in many forms.
 
@@ -168,10 +168,10 @@ intStack.push(value: 23)
 let emojiStack = Stack<Character>()
 emojiStack.push(value: "🤣")
 ```
-Now we can create a stack of any arbitray type without tediously repeating definitions.
+Now we can create a stack of any arbitray type without tediously repeating definitions. Note that this is similar to generics by value, but at the _type_ level. We are not hardcoding the type, making our programs incredibly flexible and powerful.
 
 #### Function
-One of my favorite form of *Genericity* is by function, often called _higher-order_ functions. This is possible in Swift because functions are first class citizens (typicall a type that can be passed as a parameter, returned from a function or be assigned to a variable). Suppose you had a list of strings that you wanted to convert to lowercase for standardization. You may write something like this:
+One of my favorite form of *Genericity* is by function. In Swift functions are first class citizens (typically a type that can be passed as a parameter, returned from a function or be assigned to a variable). As a result, Swift has robust support for higher order funtions, where functions can be paramerierzed by other functions. That is, you can pass a function to another function. Suppose you had a list of strings that you wanted to convert to lowercase for standardization. You may write something like this:
 
 ```swift
 func makeLowerCase(list: [String]) -> [String] {
@@ -214,28 +214,10 @@ This isn’t genericity by value where the value is just a function. The implica
 
 ##### Lowercase
 ```Swift
-func makeLowerCase(list: [String]) -> [String] {
-    var lowerCaseList: [String] = []
-    
-    for string in list {
-        lowerCaseList.append(string.lowercased())
-    }
-    return lowerCaseList
-}
-
 let lowercased = ["ONE", "LOVE", "mi", "bredda"].map { $0.lowercased() }
 ```
 ##### Even Odd List
 ```Swift 
-func evenOdd(list: [Int]) -> [Bool] {
-    var evenOddBools: [Bool] = []
-    
-    for number in list {
-        evenOddBools.append(number % 2 == 0)
-    }
-    return evenOddBools
-}
-
 let evenOddList = Array(1...20).map { $0 % 2 == 0 }
 ```
 Let’s take this even further. Say we have two lists that we want to append to together. We could write that like this:
@@ -261,8 +243,7 @@ func sum<T: Numeric>(numbers: [T]) -> T {
     return total
 }
 ```
-
-These programs can be unified since they both traverse the list in the same way. Stepping back, we can see that they have a common pattern of recursion called a fold. That is, given a list, recursively apply a combine operation, building up a return value by recombining the results of processing the each element in that list. In Swift, this is called `reduce` and can be defined as follows.
+These programs can be unified since they both traverse the list in the same way. Stepping back, we can see that they have a common pattern of recursion. That is, given a list, recursively apply a combine operation, building up a return value by recombining the results of processing the each element in that list. In Swift, this is called `reduce` and can be defined as follows.
 
 ```Swift 
 extension Array {
@@ -340,7 +321,7 @@ struct ResourceIdentifier<T: ResourceRequestable> {
 }
 ```
 
-The power that is wielded by generics can be exponentiated when it is combined with protocols. The possibilities are virtually endless. Here the resource identifier has two fields, `meta`, containing the meta information and `data` containing the information required to generate a network request. Here we employ what can be described as _Inclusion Polymorphism_. That is, the data object can be anything, as long as that thing conforms to `ResourceRequestable`. `ResourceRequestable` requires an associated type, which will be the type of the `Resource` object that we are expecting from a network call. It also requires a conforming types have a`type` and an `id` field and an `incomingRequest` func that will return a `APRequest`.
+The power that is wielded by generics can be exponentiated when it is combined with protocols. The possibilities are virtually endless. Here the resource identifier has two fields, `meta`, containing the meta information and `data` containing the information required to generate a network request. Here we employ what can be described as _Inclusion Polymorphism_. That is, the data object can be anything, as long as that thing conforms to `ResourceRequestable`. `ResourceRequestable` requires an associated type, which will be the type of the `Resource` object that we are expecting from a network call. It also requires a conforming types have a `type` and an `id` field and an `incomingRequest` func that will return a `APIRequest`.
 
 ```Swift
 protocol ResourceRequestable: Codable {
