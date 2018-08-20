@@ -20,7 +20,7 @@ To different people, _Generics_ means different things. Today we will be focusin
 Software engineering proceeds in what can be described as an _Abstraction_, _Specialization_ cycle. The abstraction phase involves identifying and classifying commonalities. In this fashion, we eliminate irrelevant details and focus on the essentials, gaining a broader understanding of the elements comprising our systems. In the end we arrive at a collection of laws that drive the *specialization* phase. During *specialization*, the general laws are used to instantiate specific cases required to make our systems work. This can lead to incredibly novel applications.
 
 ## Parameterization
-Generic programming is normally manifested as some form of parameterization. Remember, this just means to be expressed as parameters. Often times when you have a list of specific programs, you can remove the differences that lead to those specific programs and end up with a single unified generic program. Then, instantiating this unified program with various parameters causes the program to specialize itself and be expressed differently.
+Generic programming is normally manifested as some form of parameterization. Remember, this just means to be expressed in terms of parameters. Often times when you have a list of specific programs, you can remove the differences that lead to those specific programs and end up with a single unified generic program. Then, instantiating this unified program with various parameters causes the program to specialize itself and be expressed differently.
 
 ### Types
 There are different types of Generics. Today, we will cover value, type and function.
@@ -171,7 +171,7 @@ emojiStack.push(value: "🤣")
 Now we can create a stack of any arbitray type without tediously repeating definitions. Note that this is similar to generics by value, but at the _type_ level. We are not hardcoding the type, making our programs incredibly flexible and powerful.
 
 #### Function
-One of my favorite form of *Genericity* is by function. In Swift functions are first class citizens (typically a type that can be passed as a parameter, returned from a function or be assigned to a variable). As a result, Swift has robust support for higher order funtions, where functions can be paramerierzed by other functions. That is, you can pass a function to another function. Suppose you had a list of strings that you wanted to convert to lowercase for standardization. You may write something like this:
+One of my favorite form of *Genericity* is by function. In Swift functions are first class citizens (typically a type that can be passed as a parameter, returned from a function or be assigned to a variable). As a result, Swift has robust support for higher order funtions, where functions can be parameterized by other functions. That is, you can pass a function to another function. Suppose you had a list of strings that you wanted to convert to lowercase for standardization. You may write something like this:
 
 ```swift
 func makeLowerCase(list: [String]) -> [String] {
