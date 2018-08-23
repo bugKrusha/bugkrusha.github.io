@@ -168,10 +168,10 @@ intStack.push(value: 23)
 let emojiStack = Stack<Character>()
 emojiStack.push(value: "🤣")
 ```
-Now we can create a stack of any arbitray type without tediously repeating definitions. Note that this is similar to generics by value, but at the _type_ level. We are not hardcoding the type, making our programs incredibly flexible and powerful.
+Now we can create a stack of any arbitrary type without tediously repeating definitions. Note that this is similar to generics by value, but at the _type_ level. We are not hardcoding the type, making our programs incredibly flexible and powerful.
 
 #### Function
-One of my favorite form of *Genericity* is by function. In Swift functions are first class citizens (typically a type that can be passed as a parameter, returned from a function or be assigned to a variable). As a result, Swift has robust support for higher order funtions, where functions can be parameterized by other functions. That is, you can pass a function to another function. Suppose you had a list of strings that you wanted to convert to lowercase for standardization. You may write something like this:
+One of my favorite form of *Genericity* is by function. In Swift functions are first class citizens (typically a type that can be passed as a parameter, returned from a function or be assigned to a variable). As a result, Swift has robust support for higher order functions, where functions can be parameterized by other functions. That is, you can pass a function to another function. If you had a list of strings that you wanted to convert to lowercase for standardization, you may write something like this:
 
 ```swift
 func makeLowerCase(list: [String]) -> [String] {
