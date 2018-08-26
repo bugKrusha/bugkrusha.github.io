@@ -70,23 +70,22 @@ func drawAsciiTriangle(height: Int, ascii: Character) {
         print(line)
     }
 }
-drawAsciiTriangle(height: 5, ascii: "😘")
+drawAsciiTriangle(height: 7, ascii: "😘")
 ```
 😘
-
 😘😘
-
 😘😘😘
-
 😘😘😘😘
-
 😘😘😘😘😘
+😘😘😘😘😘😘
+😘😘😘😘😘😘😘
+
 
 #### Type
-A stack is a common data structure. They are backed by an array and have two important functions, `push` and `pop`, where `push` adds and element and `pop` removes the last element that was added.  They are described as first in last out (FILO). That is, the first element added by `push` will be the last removed by `pop`. If we wanted a stack of emojis, we could make something like this.
+A stack is a common data structure. They can be backed by an array and have two important functions, `push` and `pop`, where `push` adds and element and `pop` removes the last element that was added.  They are described as first in last out (FILO). That is, the first element added by `push` will be the last removed by `pop`. If we wanted a stack of emojis, we could make something like this.
 
 ```Swift 
-class EmojiStack {
+struct EmojiStack {
     var list = [Character]()
     
     var count: Int {
@@ -96,7 +95,7 @@ class EmojiStack {
     /// Add a new object to the stack.
     ///
     /// - Parameter value: Object to be added.
-    func push(value: Character) {
+    mutating func push(value: Character) {
         list.append(value)
     }
     
@@ -104,7 +103,7 @@ class EmojiStack {
     /// if the list is empty.
     ///
     /// - Returns: Last objected added if there is one.
-    func pop() -> Character? {
+    mutating func pop() -> Character? {
         return list.popLast()
     }
 }
@@ -112,7 +111,7 @@ class EmojiStack {
 Then, we realize we need a stack for numbers. We can then make something like this. 
 
 ```Swift 
-class IntStack {
+struct IntStack {
     var list = [Int]()
     
     var count: Int {
@@ -122,7 +121,7 @@ class IntStack {
     /// Add a new object to the stack.
     ///
     /// - Parameter value: Object to be added.
-    func push(value: Int) {
+    mutating func push(value: Int) {
         list.append(value)
     }
     
@@ -130,7 +129,7 @@ class IntStack {
     /// if the list is empty.
     ///
     /// - Returns: Last objected added if there is one.
-    func pop() -> Int? {
+    mutating func pop() -> Int? {
         return list.popLast()
     }
 }
@@ -139,8 +138,8 @@ class IntStack {
 Not only is it tedious to repeat similar definitions like this, it is unsafe and difficult to maintain. The definition of the backing  `data` array is essentially identical, as are the `push` and `pop` functions. The only difference is the type in the backing array and the name of the `Stack`. Abstracting away the hard coded type leads to the creation of a single unifying polymorphic type, parameterized by another type, the type that will be the backing `data` array. At work here is the fact that the instantiated behavior is independent of the type passed in. We just want to be able to add, remove and store elements, regardless of the element's identity or contents. 
 
 ```Swift 
-class Stack<T> {
-    var list = [T]()
+struct Stack<Element> {
+    var list = [Element]()
     
     var count: Int {
         return list.count
@@ -149,7 +148,7 @@ class Stack<T> {
     /// Add a new object to the stack.
     ///
     /// - Parameter value: Object to be added.
-    func push(value: T) {
+    mutating func push(value: Element) {
         list.append(value)
     }
     
@@ -157,7 +156,7 @@ class Stack<T> {
     /// if the list is empty.
     ///
     /// - Returns: Last objected added if there is one.
-    func pop() -> T? {
+    mutating func pop() -> Element? {
         return list.popLast()
     }
 }
