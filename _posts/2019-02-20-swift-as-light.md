@@ -1,20 +1,45 @@
-Introduction:
+# Introduction
 The Glowforge is the 3D Laser Printer that allows you to make things using like this wallet that I carry, my necklace and this coaster with the Swift logo. To make something you can start with something as simple as a picture or you can make sophisticated objects by creating designs in your favorite vector design tool. Ultimately, we send an SVG to the printer to create your design. The web has been supporting SVGs since 1998 which means there is a ton of support for it. However, on mobile, if support goes beyond the  displaying the whole svg, you will need complex custom tools to support your needs. In this talk, I would like to walk you through how I build our iOS apps to allow our users to print from their mobile devices. Today we will cover:
 1. Image processing 
-  a. Custom filters
-  b. Flood filling algorithms.
-2. Drawing Bezier paths
-3. Transformation in SVGs
+  1. Custom filters
+  1. Flood filling algorithms.
+1. Drawing Bezier paths
+1. Transformation in SVGs
 
+# Glowforge: Fundamentals
+Here is the design for the coaster. The single _blue_ line will be cut but the printer. All images and filled shapes will be engraved. That is, non-white pixels in images and shapes with a fill will be engraved and unfilled shapes will be cut.
 
-
-The Glowforge: Coaster
-Here is the design for the coaster. The single _blue_ line will be cut but the printer. All images and filled shapes will be engraved. That is, images and shapes with a fill will be engraved and unfilled shapes will be cut.
-
-Trace
+# Trace
 One of my favorite features of the Glowforge is what we call Trace since it requires no knowledge of specialized design tools. That is, you can take a picture with your camera and we will trace it for you using the laser. You can also add cut lines to it with a single tap.
 
-Just start with an image that you draw or downloaded. Let’s take a photo. Ouch, this photo now has an ugly shadow and all black pixels will be engraved. So we have to clean up all images that the user takes using a filter. First we grayscale the image using a luminance filter. This will give us a more uniform pixel representation of the image. Then we use a custom `CIFilter` to make the image solid black and white in real time. `CIFilter` requires  an input image and an output image. In our case the out image is the black and white image. The heart and soul of a custom filter is the color kernel. A color kernel is a GPU based image processing routine that processes only the color information in images. Here is what ours look like: 
+Just start with an image that you draw or downloaded. Let’s take a photo. Ouch, this photo now has an ugly shadow and all black pixels will be engraved. So we have to clean up all images that the user takes using a filter. First we grayscale the image using a luminance filter. This will give us a more uniform pixel representation of the image. Then we use a custom `CIFilter` to make the image solid black and white in real time.
+
+``` swift class ThresholdFilter: CIFilter {
+    @objc var inputImage: CIImage?
+    var thresholdValue: Double = 128.0
+    
+    private var colorKernel: CIColorKernel? {
+        return CIColorKernel(source:
+            """
+            kernel vec4 threshold(sampler inputImage) {
+                vec4 pixel;
+                pixel = sample(inputImage, samplerCoord(inputImage));
+                float gray = pixel.r;
+                float threshold = \(thresholdValue) / 255.0;
+                float correctedGray = (1.0 - pixel.a) + (pixel.a * gray);
+                float thresholdGray = correctedGray >= threshold ? 1.0 : 0.0;
+            
+                return vec4(thresholdGray, thresholdGray, thresholdGray, 1.0);
+            }
+            """
+        )
+    }
+    
+    //
+}
+```
+
+`CIFilter` requires  an input image and an output image. In our case the out image is the black and white image. The heart and soul of a custom filter is the color kernel. A color kernel is a GPU based image processing routine that processes only the color information in images. Here is what ours look like:
 
 
 Let’s walk through it. First what is this weird string thingy? It is Core Image Kernel Language which is its own thing with it’s quirks. Since this is a string, it is incredibly prone to errors so you have to be really careful. It’s a kernel function called `threshold` that takes a sampler object as a parameter. 
