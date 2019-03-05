@@ -1,8 +1,8 @@
 # Introduction
 The Glowforge is the 3D Laser Printer that allows you to make things using like this wallet that I carry, my necklace and this coaster with the Swift logo. To make something you can start with something as simple as a picture or you can make sophisticated objects by creating designs in your favorite vector design tool. Ultimately, we send an SVG to the printer to create your design. The web has been supporting SVGs since 1998 which means there is a ton of support for it. However, on mobile, if support goes beyond the  displaying the whole svg, you will need complex custom tools to support your needs. In this talk, I would like to walk you through how I build our iOS apps to allow our users to print from their mobile devices. Today we will cover:
 1. Image processing 
-  a. Custom filters
-  b. Flood filling algorithms.
+  * Custom filters
+  * Flood filling algorithms.
 1. Drawing Bezier paths
 1. Transformation in SVGs
 
