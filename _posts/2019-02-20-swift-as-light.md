@@ -1,5 +1,5 @@
 # Introduction
-The Glowforge is the 3D Laser Printer that allows you to make things using like this wallet that I carry, my necklace and this coaster with the Swift logo. To make something you can start with something as simple as a picture or you can make sophisticated objects by creating designs in your favorite vector design tool. Ultimately, we send an SVG to the printer to create your design. The web has been supporting SVGs since 1998 which means there is a ton of support for it. However, on mobile, if support goes beyond the  displaying the whole svg, you will need complex custom tools to support your needs. In this talk, I would like to walk you through how I build our iOS apps to allow our users to print from their mobile devices. Today we will cover:
+The Glowforge is the 3D Laser Printer that allows you to make things using like this coaster with the Swift logo. To make something you can start with something as simple as a picture or you can make sophisticated objects by creating designs in your favorite vector design tool. Ultimately, we send an SVG to the printer to create your design. The web has been supporting SVGs since 1998 which means there is a ton of support for it. However, on mobile, if support goes beyond the  displaying the whole svg, you will need complex custom tools to support your needs. In this talk, I would like to walk you through how I build our iOS apps to allow our users to print from their mobile devices. Today we will cover:
 1. Image processing 
   * Custom filters
   * Flood filling algorithms.
@@ -7,17 +7,19 @@ The Glowforge is the 3D Laser Printer that allows you to make things using like 
 1. Transformation in SVGs
 
 # Glowforge: Fundamentals
-Here is the design for the coaster. The single _blue_ line will be cut but the printer. All images and filled shapes will be engraved. That is, non-white pixels in images and shapes with a fill will be engraved and unfilled shapes will be cut.
+Here is the design for the coaster. The single _green_ line will be cut by the printer. All images and filled shapes will be engraved. That is, non-white pixels in images and shapes with a fill will be engraved and unfilled shapes will be cut. Here is a design for owl I made for my wall. This is just a simple photo that doesn't require any sophisticated preparation.
 
 # Trace
-One of my favorite features of the Glowforge is what we call Trace since it requires no knowledge of specialized design tools. That is, you can take a picture with your camera and we will trace it for you using the laser. You can also add cut lines to it with a single tap.
+One of my favorite features of the Glowforge is what we call Trace since it requires no knowledge of specialized design tools. That is, you can just take a picture with your camera and send it your printer. It will engrave it for. You can also add cut lines to it with a single tap. Let's say I wanted to make this piece for my wall. The owl could be a picture I drew, captured or downloaded. Let’s take a photo. Ouch, this photo now has an ugly shadow and all black pixels will be engraved.
 
-Just start with an image that you draw or downloaded. Let’s take a photo. Ouch, this photo now has an ugly shadow and all black pixels will be engraved. So we have to clean up all images that the user takes using a filter. First we grayscale the image using a luminance filter. This will give us a more uniform pixel representation of the image. Then we use a custom `CIFilter` to make the image solid black and white in real time. `CIFilter` requires  an input image and an output image. In our case the out image is the black and white image. The heart and soul of a custom filter is the color kernel. A color kernel is a GPU based image processing routine that processes only the color information in images. Here is what ours look like:
+## Clean up
+So we have to clean up all images that the user takes using a filter. First we grayscale the image using a luminance filter. This will give us a more uniform pixel representation of the image. Then we use a custom `CIFilter` to make the image solid black and white in real time. `CIFilter` requires  an input image and an output image. In our case the out image is the black and white image. The heart and soul of a custom filter is the color kernel. A color kernel is a GPU based image processing routine that processes only the color information in images. Here is what ours look like:
 
 ``` swift 
 class ThresholdFilter: CIFilter {
     @objc var inputImage: CIImage?
     var thresholdValue: Double = 128.0
+    var outputImage: CIImage? // Uses kernel
     
     private var colorKernel: CIColorKernel? {
         return CIColorKernel(source:
@@ -35,7 +37,6 @@ class ThresholdFilter: CIFilter {
             """
         )
     }
-    //
 }
 ```
 
@@ -50,10 +51,10 @@ If our corrected gray is greater than or equal to the threshold, we use 1 which 
 # Flood Filling
 Now our image is ready and can be sent to the printer in its current state. However, the user can decide add cut lines by outlining the entire image or a closed area within the image. Here is what this owl will look like when are down with it. We want to cut out that area around its eyes to make it look rather evil. So we tap those areas, you will see that we draw a line within that area which will tell the printer that there should be a cut there. So how do we achieve this? This is achieved by using a flood filling algorithm to find all the pixels enclosed within the outlining border. Then we find all the border pixels and determine if the hit the border on the top, bottom, left or right and we store that. We then unwind those pixels to build a bezierpath _needs diagram_.
 
-Flood filling is used to define a region in an image that has the same colors. To achieve this, we establish that pixels have neighbors, top, bottom, left, right. In our case, the user will tap a pixel within a region and we will remember the color of that pixel. Any pixel of the same color that can be reached by a neighborhood relationship are marked as being within the region. If a pixel of a different color is encountered, it is regarded as a boundary. This process starts when the user selects a pixel. We put all the pixels of the image in an array.
+Flood filling is used to define a region in an image that has the same color pixels. To achieve this, we establish that pixels have neighbors, top, bottom, left, right. In our case, the user will tap a pixel within a region and we will remember the color of that pixel. Any pixel of the same color that can be reached by a neighborhood relationship are marked as being within the region. If a pixel of a different color is encountered, it is regarded as a boundary. Before we start the floodfilling process, we put all the pixels of the image in an array.  
 
 ## Getting Pixels into an Array
-An image or bitmap is a two-dimensional array of elements with each element representing the colors in a pixel. To simplify things, I convert the image to one dimensional array using a buffer as shown.
+An image or bitmap is a two-dimensional array of elements with each element representing the colors in a pixel (_show pixelated image_). To simplify things, I convert the image to one dimensional array using a buffer as shown. 
 
 ``` Swift
 typealias PixelBuffer = UnsafeMutableBufferPointer<Pixel>
@@ -70,7 +71,7 @@ struct Pixel: Equatable {
 ```
 
 ## Touching a Pixel
-When a user touches a pixel, you can find the x, y coordinate of that pixel in two dimensional space.
+Flood filling starts when the user selects a pixel.When a user touches a pixel, you can find the x, y coordinate of that pixel in two dimensional space.
 
 ``` Swift
 func imageTapped(_ sender: UITapGestureRecognizer) {
@@ -175,7 +176,7 @@ final class DrawableImageView: UIImageView {
 }
 ```
 
-1.  Declarae drawable view
+1.  Declare drawable view
 1.  Add the drawable view as a subview
 1.  Set the frame of the drawable view
 
@@ -189,13 +190,9 @@ When a user loads their design, we extract the groups from the svg and create in
 ```svg
 <?xml version="1.0"?>
 <svg >
-   <g id="oEw">
-      <g id="oE">
-         <g id="g0">
-            <image width="3175" height="2845" xlink:href="data:image/png;base64,iVBOR.." transform="matrix(-0.12 0.14 -0.14 -0.126 1398.7 567.368)"/>
-            <path id="e1" d="M1434.66666667 642.66666667A456 456 0 0 1 522.66666667 642.66666667A456 456 0 0 1 1434.66666667 642.66666667z" class="e l1" />
-         </g>
-      </g>
+   <g id="g0">
+      <image width="3175" height="2845" xlink:href="data:image/png;base64,iVBOR.." transform="matrix(-0.12 0.14 -0.14 -0.126 1398.7 567.368)"/>
+      <path id="e1" d="M1434.66666667 642.66666667A456 456 0 0 1 522.66666667 642.66666667A456 456 0 0 1 1434.66666667 642.66666667z" class="e l1" />
    </g>
 </svg>
 ```
@@ -226,7 +223,7 @@ groupPath.boundingBox
 
 We extract the string under the d attribute for each path. That contains the information about how the path should be drawn. Using a complicated algorithm, we can convert this string to Bezierpath.
 We then reduce these paths into a single path.
-We the use the `boundingBox` property on the bezierpath to get a frame for positioning..
+We the use the `boundingBox` property on the `cgPath` to get a frame for positioning..
 We then use this path to create a shape layer like so.
 
 `Shape layer code here`:
@@ -261,7 +258,7 @@ struct DragGroup {
 }
 ```
 
-## Drawing and Position:
+## Drawing and Positioning:
 Now that we have the drag group, we use it draw and position a drag group view. This view will have an image view as subview for the image and the layer will be added as . The frame of the drag group view itself is rather straightforward, being the smallest frame that could fit both the frame of the layer and the frame of the image view. Let’s first talk about the layer. If I just add this layer to the layer of the DragGroupView, we get something like this.
 
 `show image here:`
