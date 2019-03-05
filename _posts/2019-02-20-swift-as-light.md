@@ -136,6 +136,7 @@ var pathTransformation: PathTransformation  {
 
 # Drawing the path
 Drawing the path has a bit of indirection because while building this, I ran into issues with drawing directly on an image view. So I make it such that we have a `DrawableView` that is transparent over the the `DrawableImageView`. Here is what they look like:
+
 ## DrawableView
 ```Swift
 class DrawableView: UIView {
@@ -183,10 +184,45 @@ The Glowforge uses SVGs for design files. They are lightweight and ubiquitous on
 
 `Show a svg then focus on the group:`
 
-When a user loads their design, we extract the groups from the svg and create individual views that the user can interact with. That way, they can move them around to exactly where they want their print to be on the material. _Show screenshot_ Importantly, the position of the view on the screen has to translate precisely to the position on the material. Mistakes are costly since we are dealing with a laser that consumes the material. Let’s see how we extract the groups from the SVG, draw them on screen and precisely monitor their transformations.
+When a user loads their design, we extract the groups from the svg and create individual views that the user can interact with. That way, they can move them around to exactly where they want their print to be on the material. _Show screenshot_ Importantly, the position of the view on the screen has to translate precisely to the position on the material. Mistakes are costly since we are dealing with a laser that consumes the material. Let’s see how we extract the groups from the SVG, draw them on screen and precisely monitor their transformations. Here is a svg that I used to make a coaster with a swift logo. It has an image that will be engraved and the circle is a cut line since it is an unfilled shape.
 
-First, we reduce the paths into a single bezierpath like this: 
-`Show reduce code here`
+```svg
+<?xml version="1.0"?>
+<svg >
+   <g id="oEw">
+      <g id="oE">
+         <g id="g0">
+            <image width="3175" height="2845" xlink:href="data:image/png;base64,iVBOR.." transform="matrix(-0.12 0.14 -0.14 -0.126 1398.7 567.368)"/>
+            <path id="e1" d="M1434.66666667 642.66666667A456 456 0 0 1 522.66666667 642.66666667A456 456 0 0 1 1434.66666667 642.66666667z" class="e l1" />
+         </g>
+      </g>
+   </g>
+</svg>
+```
+
+We want a model like this to help us draw the path for each group.
+
+``` Swift
+struct DragGroupLayer {
+    let layer: CALayer // 1. 
+    let frame: CGRect // 2.
+}
+```
+1. All the layers combined
+1. The frame of the combined layer.
+
+The information to draw the paths/shapes for each group resides inside the path tags, specifically the string within the `d` attribute. We parse the svg and extract the `dpaths` into an array of strings which we then convert into a single bezierpath.
+
+``` Swift
+let groupPath = UIBezierPath()
+dpaths.forEach { groupPath.append(bezier(from: $0)) }
+```
+
+Once you have `groupPath`, you can find its frame by calling the `boundingBox` parameter on it.
+
+```Swift
+groupPath.boundingBox
+```
 
 We extract the string under the d attribute for each path. That contains the information about how the path should be drawn. Using a complicated algorithm, we can convert this string to Bezierpath.
 We then reduce these paths into a single path.
@@ -195,40 +231,103 @@ We then use this path to create a shape layer like so.
 
 `Shape layer code here`:
 
-Note that we also extract the image data along with its transform and store them. In the end we have a class that looks like this:
+Recall that that the image tag in the svg looked like this:
+```Swift
+<image width="3175" height="2845" xlink:href="data:image/png;base64,iVBOR.." transform="matrix(-0.12 0.14 -0.14 -0.126 1398.7 567.368)"/>"
+```
+From that, we can build a model like this:
 
-`Show drag group code here:`
-
-``` Swift
-
+```Swift
+struct DragGroupImage {
+    let frame: CGRect // 1.
+    let data: Data // 2. 
+    let transform: CGAffineTransform // 3.
+}
 ```
 
-Drawing and Position:
-Now that we have the drag group, we need use it draw and position a drag group view. This view will hold a image view for the image and the layer. The frame of the drag group view itself is rather straightforward, being the smallest frame that could fit both the frame of the layer and the frame of the image view. Let’s first talk about the layer. If I just add this layer to the layer of the DragGroupView, we get something like this :sob:
+1. The frame values are parsed directly from the string.
+1. The data is derived from the `href` attribute which is base 64 string that can be converted to `Data`.
+1. Take the transform from the `transform` tag and use it to make a `CGAffineTransform`.
+
+``` Swift
+struct DragGroup {
+    let dragGroupLayer: DragGroupLayer
+    let dragGroupImage: DragGroupImage
+    
+    init(dragGroupLayer: DragGroupLayer, dragGroupImage: DragGroupImage) {
+        self.dragGroupLayer = dragGroupLayer
+        self.dragGroupImage = dragGroupImage
+    }
+}
+```
+
+## Drawing and Position:
+Now that we have the drag group, we use it draw and position a drag group view. This view will have an image view as subview for the image and the layer will be added as . The frame of the drag group view itself is rather straightforward, being the smallest frame that could fit both the frame of the layer and the frame of the image view. Let’s first talk about the layer. If I just add this layer to the layer of the DragGroupView, we get something like this.
 
 `show image here:`
 
 The layer is positioned outside the view. Any ideas? They issue is that the origin of the layer that we calculated with `let frame = path.boundingBox` is the position within the entire svg. Now we would like the position inside this drag group view. Therefore, we create a translation using the negative values of the origin and set the layer’s transform as that. This basically moves the layer to the parent view’s origin.
 
-`ImageView`
-The image view get’s a little more interesting. Recall that the image tag had a transform, x and y origin, length and width. That means we have to create the image view with the given frame, then apply the transformation to it. Let’s do that. Again, this looks crazy :sob:
+```Swift
+let distance = CGPoint(x: -frame.origin.x, y: -frame.origin.y)
+let translation = CGAffineTransform(translationX: distance.x, y: distance.y)
+layer.setAffineTransform(translation)
+```
+
+## ImageView
+
+The image view get’s a little more interesting. Recall that we had a model, `DragGroupImage` that looked like that this:
+
+```Swift
+struct DragGroupImage {
+    let frame: CGRect
+    let data: Data 
+    let transform: CGAffineTransform
+}
+```
+
+That means we have to create the image view with the given frame, then apply the transformation to it. Let’s do that. Again, this looks crazy.
+
+```Swift
+final class BitmapImageView: UIImageView {
+    init(dragGroupImage: DragGroupImage) {
+        super.init(frame: dragGroupImage.frame)
+        
+        self.image = UIImage(data: dragGroupImage.data)
+        self.transform = dragGroupImage.transform
+    }
+    
+    //
+}
+```
+
+This looks fine, in code. But in reality, it looks crazy:
+
+_show image here_
+
 Not only is the positioning wrong, but so is the size and the rotation. Why could this be? Well, in svgs, transformation occur around the origin unless otherwise defined. Here is what that looks like:
 
-`Show diagram of square rotate here:`
+_Show diagram of square rotate here:_
 
 However, in iOS, rotation occurs around the center so look like this:
 
-`Show center rotation here:`
+_Show center rotation here:_
 
+_show them side by side_
 
 So how do we achieve this? Ideas? Well to move the transformation to the origin from the center, we just translate the view using the negative values of its current x/y origin. Then, and only then we apply the transformation using a contenation. Once the transformation is over, we must translate the view back to its origin using the values of the center. That code will look like this:
 
-`show code here:`
-
 ``` Swift
-
+extension CGAffineTransform {
+    func doneAround(point: CGPoint) -> CGAffineTransform {
+        let translation = CGAffineTransform(translationX: point.x, y: point.y)
+        
+        return translation
+            .concatenating(self)
+            .concatenating(translation.inverted())
+    }
+}
 ```
-
 
 Closing
 Building an app for the Glowforge means that we have to take a lot of technology that have existing solutions or work default and make them work for us. Image processing is emphasized on mobile and we can leverage native APIs to get our desired results. Working with SVGs and other web technologies though might take you down a path of temporary insanity but continued discovery. I hope I was able to show you some cool stuff today :)
