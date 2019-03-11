@@ -48,6 +48,7 @@ class ThresholdFilter: CIFilter {
 Let’s walk through it. First what is this weird string thingy? It is Core Image Kernel Language which is its own thing with its own set of quirks. Since this is a string, it is incredibly prone to errors so you have to be really careful. It’s a kernel function called `threshold` that takes a sampler object as a parameter. 
 
 1. This sampler is responsible for accessing image data and passing it to the kernel routine. We declare a `vec4` as a pixel. A `vec4` is a four element vector that can conveniently store the red, green, blue, and alpha components of a pixel.
+1. Gets a pixel from the source image and set pixel to it.
 1. We convert our given threshold to a value between zero and one by dividing our constant by 255. Where does 255 come from? In a grayscale image, the pixel value is a single value representing the brightness of the pixel. This value is stored as an 8 bit integer that ranges from 0 - 255 with 0 taken as black and 255 taken as white. Everything in between are shades of gray.
 1. This looks fancy but it just ensures the transparency in a pixel is corrected since we can’t engrave transparent pixels
 If our corrected gray is greater than or equal to the threshold, we use 1 which makes the pixel white. If not, we use 0 which makes the pixel black.
