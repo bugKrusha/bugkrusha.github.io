@@ -1,5 +1,10 @@
 # Introduction
-The Glowforge is the 3D Laser Printer that allows you to make things using like this coaster with the Swift logo. To make something you can start with something as simple as a picture or you can make sophisticated objects by creating designs in your favorite vector design tool. Ultimately, we send an SVG to the printer to create your design. The web has been supporting SVGs since 1998 which means there is a ton of support for it. However, on mobile, if support goes beyond the  displaying the whole svg, you will need complex custom tools to support your needs. In this talk, I would like to walk you through how I build our iOS apps to allow our users to print from their mobile devices. Today we will cover:
+_Show video here_
+I feel incredibly lucky! I work at a place where I test my builds by firing up a laser, from an iOS device. This is very exciting, but it can also be a bit frustrating. There just aren't many examples of Swift written for 3D Laser printers. However, most days I am sure my work will take me on an interesting path of learning and discovery. 
+
+The Glowforge is the 3D Laser Printer that allows you to make things using like this coaster with the Swift logo or this art piece that I made for my desk. 
+
+To make something you can start with something as simple as a picture or you can make sophisticated objects by creating designs in your favorite vector design tool. Ultimately, we send an SVG to the printer to create your design. The web has been supporting SVGs since 1998 which means there is a ton of support for it. However, on mobile, if support goes beyond the  displaying the whole svg, you will need complex custom tools to support your needs. In this talk, I would like to walk you through how I build our iOS apps to allow our users to print from their mobile devices. Today we will cover:
 1. Image processing 
   * Custom filters
   * Flood filling algorithms.
